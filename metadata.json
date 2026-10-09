@@ -1,0 +1,6 @@
+{
+  "name": "Krishisetu - Agricultural Marketplace & Equipment Rental",
+  "description": "Smart agricultural marketplace for seeds, fertilizers, and pesticides with FCFS equipment rental queue system and Razorpay payment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
