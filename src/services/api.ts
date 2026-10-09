@@ -31,14 +31,14 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // Client-side Database Initial State for Fallback / Offline Mode
-const CATALOG_VERSION = 'v3_realistic_catalog_24';
+const CATALOG_VERSION = 'v4_public_assets_24';
 const STORAGE_KEYS = {
-  USERS: 'krishi_mock_users_v3',
-  PRODUCTS: 'krishi_mock_products_v3',
-  EQUIPMENT: 'krishi_mock_equipment_v3',
+  USERS: 'krishi_mock_users_v4',
+  PRODUCTS: 'krishi_mock_products_v4',
+  EQUIPMENT: 'krishi_mock_equipment_v4',
   CART: 'krishi_mock_cart',
   ORDERS: 'krishi_mock_orders',
-  BOOKINGS: 'krishi_mock_bookings_v3',
+  BOOKINGS: 'krishi_mock_bookings_v4',
   AVAILABILITY: 'krishi_mock_availability',
   CONFIG: 'krishi_mock_config_version',
 };
@@ -127,7 +127,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 95,
     availability_status: 'IN_STOCK',
     description: 'ICAR-certified high-yield, yellow-rust resistant wheat seed variety suitable for irrigated and timely sown conditions across northern and central plains. Germination rate above 96%.',
-    image_url: '/src/assets/images/wheat_seeds_sack_1791500903435.jpg',
+    image_url: '/assets/images/wheat_seeds_sack_1791500903435.jpg',
     vendor_name: 'AgriCorp Agro Chemicals',
     created_at: new Date().toISOString(),
   },
@@ -140,7 +140,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 64,
     availability_status: 'IN_STOCK',
     description: 'Extra-long slender grain aromatic Basmati paddy seeds with high market value, strong culm strength, and superior milling recovery. Ideal for Kharif transplanting.',
-    image_url: '/src/assets/images/basmati_paddy_seeds_1791500920007.jpg',
+    image_url: '/assets/images/basmati_paddy_seeds_1791500920007.jpg',
     vendor_name: 'Kisan Krishi Seva Kendra',
     created_at: new Date().toISOString(),
   },
@@ -153,7 +153,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 120,
     availability_status: 'IN_STOCK',
     description: 'Cruiser-Plus systemic fungicide & insecticide treated F1 hybrid cotton seeds with big boll size, high ginning percentage, and tolerance against pink bollworm and jassids.',
-    image_url: '/src/assets/images/hybrid_cotton_seeds_1791500931145.jpg',
+    image_url: '/assets/images/hybrid_cotton_seeds_1791500931145.jpg',
     vendor_name: 'AgriCorp Agro Chemicals',
     created_at: new Date().toISOString(),
   },
@@ -166,7 +166,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 48,
     availability_status: 'IN_STOCK',
     description: 'Certified bold-seeded yellow maize and high-oil JS-9560 soybean foundation seeds. Features drought tolerance, early maturity (95 days), and shatter-resistant pods.',
-    image_url: '/src/assets/images/soybean_maize_seeds_1791500943314.jpg',
+    image_url: '/assets/images/soybean_maize_seeds_1791500943314.jpg',
     vendor_name: 'Kisan Krishi Seva Kendra',
     created_at: new Date().toISOString(),
   },
@@ -179,7 +179,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 72,
     availability_status: 'IN_STOCK',
     description: 'Free-flowing crystalline balanced macronutrient formula (19% N, 19% P, 19% K) for drip fertigation and foliar spray. Boosts vegetative branching, root vigor, and fruit setting.',
-    image_url: '/src/assets/images/npk_fertilizer_bag_1791500953747.jpg',
+    image_url: '/assets/images/npk_fertilizer_bag_1791500953747.jpg',
     vendor_name: 'AgriCorp Agro Chemicals',
     created_at: new Date().toISOString(),
   },
@@ -192,7 +192,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 310,
     availability_status: 'IN_STOCK',
     description: 'Government-grade prilled urea coated with natural neem oil to slow nitrification, prevent leaching loss, and deliver sustained nitrogen nutrition to cereal and cash crops.',
-    image_url: '/src/assets/images/neem_coated_urea_1791500964626.jpg',
+    image_url: '/assets/images/neem_coated_urea_1791500964626.jpg',
     vendor_name: 'Kisan Krishi Seva Kendra',
     created_at: new Date().toISOString(),
   },
@@ -205,7 +205,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 55,
     availability_status: 'IN_STOCK',
     description: 'Basal dose Di-Ammonium Phosphate paired with Zinc Sulphate Monohydrate 33% to eliminate Khaira disease in paddy and establish deep root architecture in wheat and sugarcane.',
-    image_url: '/src/assets/images/dap_zinc_fertilizer_1791500980608.jpg',
+    image_url: '/assets/images/dap_zinc_fertilizer_1791500980608.jpg',
     vendor_name: 'AgriCorp Agro Chemicals',
     created_at: new Date().toISOString(),
   },
@@ -218,7 +218,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 140,
     availability_status: 'IN_STOCK',
     description: 'Earthworm-processed humus-rich organic manure blended with mobilized bio-potash granules and Trichoderma viride. Improves soil water retention, aeration, and microbial life.',
-    image_url: '/src/assets/images/organic_vermicompost_potash_1791500991903.jpg',
+    image_url: '/assets/images/organic_vermicompost_potash_1791500991903.jpg',
     vendor_name: 'Kisan Krishi Seva Kendra',
     created_at: new Date().toISOString(),
   },
@@ -231,7 +231,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 68,
     availability_status: 'IN_STOCK',
     description: '100% organic botanical antifeedant and insect growth regulator effective against whiteflies, aphids, thrips, mites, and leaf miners without harming beneficial pollinators.',
-    image_url: '/src/assets/images/neem_oil_biopesticide_1791501004700.jpg',
+    image_url: '/assets/images/neem_oil_biopesticide_1791501004700.jpg',
     vendor_name: 'AgriCorp Agro Chemicals',
     created_at: new Date().toISOString(),
   },
@@ -244,7 +244,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 42,
     availability_status: 'IN_STOCK',
     description: 'Dual-action systemic crop protection pack containing Azoxystrobin + Tebuconazole fungicide and Thiamethoxam insecticide for rapid control of blight, rust, and stem borers.',
-    image_url: '/src/assets/images/crop_fungicide_insecticide_1791501015614.jpg',
+    image_url: '/assets/images/crop_fungicide_insecticide_1791501015614.jpg',
     vendor_name: 'AgriCorp Agro Chemicals',
     created_at: new Date().toISOString(),
   },
@@ -257,7 +257,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 28,
     availability_status: 'IN_STOCK',
     description: 'UV-stabilized Virgin Grade PE-100 HDPE drip irrigation lateral coil with pre-fitted cylindrical emitters at 40cm spacing, PVC ball valves, and brass impact sprinkler heads.',
-    image_url: '/src/assets/images/hdpe_irrigation_pipes_1791501025898.jpg',
+    image_url: '/assets/images/hdpe_irrigation_pipes_1791501025898.jpg',
     vendor_name: 'Godavari Irrigation & Farm Tech',
     created_at: new Date().toISOString(),
   },
@@ -270,7 +270,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 19,
     availability_status: 'IN_STOCK',
     description: 'Heavy-duty ISI-marked 6 kg/cm² quick-coupled PVC portable irrigation pipes (6m lengths) with galvanized latch couplers and a 1.5-inch adjustable brass rain gun on tripod stand.',
-    image_url: '/src/assets/images/rain_gun_sprinkler_pipes_1791501234370.jpg',
+    image_url: '/assets/images/rain_gun_sprinkler_pipes_1791501234370.jpg',
     vendor_name: 'Godavari Irrigation & Farm Tech',
     created_at: new Date().toISOString(),
   },
@@ -283,7 +283,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 34,
     availability_status: 'IN_STOCK',
     description: 'High-pressure diaphragm pump rechargeable knapsack sprayer capable of spraying 18–20 tanks per charge. Includes telescopic brass lance, pressure regulator gauge, and 4-nozzle set.',
-    image_url: '/src/assets/images/battery_knapsack_sprayer_1791501046903.jpg',
+    image_url: '/assets/images/battery_knapsack_sprayer_1791501046903.jpg',
     vendor_name: 'Godavari Irrigation & Farm Tech',
     created_at: new Date().toISOString(),
   },
@@ -296,7 +296,7 @@ const DEFAULT_PRODUCTS: Product[] = [
     stock: 8,
     availability_status: 'LOW_STOCK',
     description: '2-stroke 42cc petrol engine motorized orchard mist blower reaching up to 11 meters horizontal spray throw. Ideal for mango, pomegranate, vineyard, and tall field crops.',
-    image_url: '/src/assets/images/power_mist_blower_sprayer_1791501245816.jpg',
+    image_url: '/assets/images/power_mist_blower_sprayer_1791501245816.jpg',
     vendor_name: 'Godavari Irrigation & Farm Tech',
     created_at: new Date().toISOString(),
   },
@@ -317,7 +317,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Nashik, Maharashtra',
     stock_quantity: 2,
     availability_status: 'AVAILABLE',
-    image_url: '/src/assets/images/mahindra_red_tractor_1791501058296.jpg',
+    image_url: '/assets/images/mahindra_red_tractor_1791501058296.jpg',
     created_at: new Date().toISOString(),
   },
   {
@@ -334,7 +334,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Pune, Maharashtra',
     stock_quantity: 1,
     availability_status: 'AVAILABLE',
-    image_url: '/src/assets/images/john_deere_green_tractor_1791501071564.jpg',
+    image_url: '/assets/images/john_deere_green_tractor_1791501071564.jpg',
     created_at: new Date().toISOString(),
   },
   {
@@ -351,7 +351,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Satara, Maharashtra',
     stock_quantity: 2,
     availability_status: 'AVAILABLE',
-    image_url: '/src/assets/images/swaraj_blue_tractor_1791501084071.jpg',
+    image_url: '/assets/images/swaraj_blue_tractor_1791501084071.jpg',
     created_at: new Date().toISOString(),
   },
   {
@@ -368,7 +368,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Nashik, Maharashtra',
     stock_quantity: 3,
     availability_status: 'AVAILABLE',
-    image_url: '/src/assets/images/rotavator_rotary_tiller_1791501094685.jpg',
+    image_url: '/assets/images/rotavator_rotary_tiller_1791501094685.jpg',
     created_at: new Date().toISOString(),
   },
   {
@@ -385,7 +385,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Pune, Maharashtra',
     stock_quantity: 1,
     availability_status: 'HIGH_DEMAND',
-    image_url: '/src/assets/images/combine_harvester_machine_1791501105447.jpg',
+    image_url: '/assets/images/combine_harvester_machine_1791501105447.jpg',
     created_at: new Date().toISOString(),
   },
   {
@@ -402,7 +402,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Kolhapur, Maharashtra',
     stock_quantity: 1,
     availability_status: 'AVAILABLE',
-    image_url: '/src/assets/images/paddy_combine_harvester_1791501270303.jpg',
+    image_url: '/assets/images/paddy_combine_harvester_1791501270303.jpg',
     created_at: new Date().toISOString(),
   },
   {
@@ -419,7 +419,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Nashik, Maharashtra',
     stock_quantity: 4,
     availability_status: 'AVAILABLE',
-    image_url: '/src/assets/images/spring_tyne_cultivator_1791501117714.jpg',
+    image_url: '/assets/images/spring_tyne_cultivator_1791501117714.jpg',
     created_at: new Date().toISOString(),
   },
   {
@@ -436,7 +436,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Ahmednagar, Maharashtra',
     stock_quantity: 2,
     availability_status: 'AVAILABLE',
-    image_url: '/src/assets/images/seed_cum_fertilizer_drill_1791501128600.jpg',
+    image_url: '/assets/images/seed_cum_fertilizer_drill_1791501128600.jpg',
     created_at: new Date().toISOString(),
   },
   {
@@ -453,7 +453,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Nashik, Maharashtra',
     stock_quantity: 2,
     availability_status: 'AVAILABLE',
-    image_url: '/src/assets/images/tractor_boom_sprayer_1791501140854.jpg',
+    image_url: '/assets/images/tractor_boom_sprayer_1791501140854.jpg',
     created_at: new Date().toISOString(),
   },
   {
@@ -470,7 +470,7 @@ const DEFAULT_EQUIPMENT: Equipment[] = [
     location: 'Satara, Maharashtra',
     stock_quantity: 1,
     availability_status: 'AVAILABLE',
-    image_url: '/src/assets/images/laser_land_leveler_plough_1791501258441.jpg',
+    image_url: '/assets/images/laser_land_leveler_plough_1791501258441.jpg',
     created_at: new Date().toISOString(),
   },
 ];
@@ -750,7 +750,7 @@ class MockBackendEngine {
   }
 
   public updateCartItem(id: number, quantity: number): CartItem {
-    const item = this.cart.find((c) => c.id === id);
+    const item = this.cart.find((c) => c.id === id || c.product_id === id);
     if (!item) throw new Error('Cart item not found');
     item.quantity = quantity;
     setStorage(STORAGE_KEYS.CART, this.cart);
@@ -758,7 +758,7 @@ class MockBackendEngine {
   }
 
   public deleteCartItem(id: number): boolean {
-    this.cart = this.cart.filter((c) => c.id !== id);
+    this.cart = this.cart.filter((c) => c.id !== id && c.product_id !== id);
     setStorage(STORAGE_KEYS.CART, this.cart);
     return true;
   }
@@ -772,7 +772,8 @@ class MockBackendEngine {
   public createOrder(
     farmerId: number,
     razorpayOrderId?: string,
-    razorpayPaymentId?: string
+    razorpayPaymentId?: string,
+    deliveryAddress?: string
   ): Order {
     const cartItems = this.getCart(farmerId);
     if (!cartItems.length) {
@@ -804,6 +805,7 @@ class MockBackendEngine {
       farmer_name: farmer ? farmer.name : 'Farmer',
       status: 'PLACED',
       total_amount: total,
+      delivery_address: deliveryAddress || (farmer ? farmer.location : 'Registered Farm Address'),
       razorpay_order_id: razorpayOrderId || `order_test_${Date.now()}`,
       razorpay_payment_id: razorpayPaymentId || `pay_test_${Date.now()}`,
       items: orderItems,
@@ -1296,7 +1298,8 @@ export const api = {
       const userStr = localStorage.getItem('krishi_user');
       const farmerId = userStr ? JSON.parse(userStr).id : 1;
       const rzpOrderId = typeof dataOrRazorpayOrderId === 'object' ? dataOrRazorpayOrderId?.razorpay_order_id : dataOrRazorpayOrderId;
-      return mockBackend.createOrder(farmerId, rzpOrderId, razorpayPaymentId);
+      const deliveryAddr = typeof dataOrRazorpayOrderId === 'object' ? dataOrRazorpayOrderId?.delivery_address : undefined;
+      return mockBackend.createOrder(farmerId, rzpOrderId, razorpayPaymentId, deliveryAddr);
     }
   },
 
@@ -1310,7 +1313,7 @@ export const api = {
       await apiClient.post('/payments/verify', data);
       return true;
     } catch {
-      mockBackend.updateOrderStatus(data.order_id, 'PLACED');
+      mockBackend.updateOrderStatus(data.order_id, 'CONFIRMED');
       return true;
     }
   },

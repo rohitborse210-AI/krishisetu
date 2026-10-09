@@ -87,16 +87,20 @@ export const Cart: React.FC = () => {
     }
   };
 
-  const handlePaymentSuccess = async (paymentId: string, signature: string) => {
+  const handlePaymentSuccess = async (paymentData: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) => {
     if (!paymentDetails) return;
 
     try {
       // 3. Verify signature on backend
       await api.verifyPayment({
         order_id: paymentDetails.orderId,
-        razorpay_order_id: paymentDetails.razorpayOrderId,
-        razorpay_payment_id: paymentId,
-        razorpay_signature: signature,
+        razorpay_order_id: paymentData.razorpay_order_id || paymentDetails.razorpayOrderId,
+        razorpay_payment_id: paymentData.razorpay_payment_id,
+        razorpay_signature: paymentData.razorpay_signature,
       });
 
       // 4. Clear local cart & redirect
@@ -276,8 +280,7 @@ export const Cart: React.FC = () => {
         <RazorpayCheckoutModal
           isOpen={isPaymentModalOpen}
           amount={paymentDetails.amount}
-          orderId={paymentDetails.orderId}
-          razorpayOrderId={paymentDetails.razorpayOrderId}
+          orderId={paymentDetails.razorpayOrderId}
           onSuccess={handlePaymentSuccess}
           onClose={() => setIsPaymentModalOpen(false)}
         />

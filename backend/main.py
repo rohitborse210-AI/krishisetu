@@ -4,6 +4,7 @@ from backend.database import engine, Base
 from backend.routers import auth, products, equipment, bookings, orders, payments, admin
 from backend.scheduler import start_scheduler
 from backend.config import settings
+from backend.seed import seed
 
 # Create database tables automatically if not already created
 Base.metadata.create_all(bind=engine)
@@ -14,10 +15,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Enable CORS for Vite frontend
+# Enable CORS for frontend (Vercel production + local development)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,6 +39,10 @@ scheduler = None
 @app.on_event("startup")
 def on_startup():
     global scheduler
+    try:
+        seed()
+    except Exception as exc:
+        print(f"Seed check warning: {exc}")
     scheduler = start_scheduler()
 
 @app.on_event("shutdown")
@@ -52,3 +57,4 @@ def health_check():
         "service": "Krishisetu FastAPI Backend",
         "version": "1.0.0",
     }
+

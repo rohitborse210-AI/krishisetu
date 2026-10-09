@@ -264,13 +264,13 @@ export const Navbar: React.FC = () => {
                             Machinery Owner
                           </div>
                           <Link
-                            to="/my-equipment"
+                            to="/owner/equipment"
                             className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                           >
                             <Tractor className="w-4 h-4 text-slate-500" /> Manage My Equipment
                           </Link>
                           <Link
-                            to="/my-equipment/bookings"
+                            to="/owner/bookings"
                             className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                           >
                             <CalendarDays className="w-4 h-4 text-slate-500" /> Incoming Booking Queue
@@ -417,7 +417,7 @@ export const Navbar: React.FC = () => {
               )}
               {user.is_equipment_owner && (
                 <Link
-                  to="/my-equipment"
+                  to="/owner/equipment"
                   onClick={() => setMobileMenuOpen(false)}
                   className="block px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >

@@ -7,6 +7,7 @@ from backend.models import User, Product, Equipment, Order, BookingRequest, User
 from backend.schemas import UserResponse, OrderResponse, BookingResponse, AdminStatsResponse
 from backend.auth import require_roles
 from backend.routers.bookings import format_booking_response
+from backend.routers.orders import format_order_response
 
 router = APIRouter(prefix="/api/admin", tags=["Admin Governance"])
 
@@ -18,6 +19,7 @@ def get_admin_stats(
     total_users = db.query(User).count()
     total_farmers = db.query(User).filter(User.role == UserRole.FARMER).count()
     total_vendors = db.query(User).filter(User.role == UserRole.VENDOR).count()
+    total_equipment_owners = db.query(User).filter(User.is_equipment_owner == True).count()
     total_equipment = db.query(Equipment).count()
     total_products = db.query(Product).count()
     total_orders = db.query(Order).count()
@@ -30,6 +32,7 @@ def get_admin_stats(
         "total_users": total_users,
         "total_farmers": total_farmers,
         "total_vendors": total_vendors,
+        "total_equipment_owners": total_equipment_owners,
         "total_equipment": total_equipment,
         "total_products": total_products,
         "total_orders": total_orders,
@@ -42,8 +45,20 @@ def get_all_users(
     current_user: User = Depends(require_roles([UserRole.ADMIN])),
     db: Session = Depends(get_db),
 ):
-    users = db.query(User).order_by(User.created_at.desc()).all()
-    return [UserResponse.from_orm(u) for u in users]
+    users = db.query(User).order_by(User.id.asc()).all()
+    return [
+        UserResponse(
+            id=u.id,
+            name=u.name,
+            email=u.email,
+            phone=u.phone,
+            role=u.role,
+            is_equipment_owner=u.is_equipment_owner,
+            location=u.location,
+            created_at=u.created_at,
+        )
+        for u in users
+    ]
 
 @router.get("/orders", response_model=List[OrderResponse])
 def get_all_orders(
@@ -51,13 +66,7 @@ def get_all_orders(
     db: Session = Depends(get_db),
 ):
     orders = db.query(Order).order_by(Order.created_at.desc()).all()
-    results = []
-    for o in orders:
-        resp = OrderResponse.from_orm(o)
-        if o.farmer:
-            resp.farmer_name = o.farmer.name
-        results.append(resp)
-    return results
+    return [format_order_response(o) for o in orders]
 
 @router.get("/bookings", response_model=List[BookingResponse])
 def get_all_bookings(
@@ -66,3 +75,4 @@ def get_all_bookings(
 ):
     bookings = db.query(BookingRequest).order_by(BookingRequest.created_at.desc()).all()
     return [format_booking_response(b) for b in bookings]
+

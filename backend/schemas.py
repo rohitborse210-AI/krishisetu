@@ -13,7 +13,7 @@ class UserBase(BaseModel):
     location: str
 
 class UserCreate(UserBase):
-    password: str
+    password: str = "password123"
 
 class UserResponse(UserBase):
     id: int
@@ -29,7 +29,7 @@ class Token(BaseModel):
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: Optional[str] = "password123"
 
 # Product Schemas
 class ProductBase(BaseModel):
@@ -38,6 +38,7 @@ class ProductBase(BaseModel):
     description: str
     price: float
     stock: int
+    availability_status: Optional[str] = "IN_STOCK"
     image_url: str
 
 class ProductCreate(ProductBase):
@@ -49,6 +50,7 @@ class ProductUpdate(BaseModel):
     description: Optional[str] = None
     price: Optional[float] = None
     stock: Optional[int] = None
+    availability_status: Optional[str] = None
     image_url: Optional[str] = None
 
 class ProductResponse(ProductBase):
@@ -56,6 +58,7 @@ class ProductResponse(ProductBase):
     vendor_id: int
     vendor_name: Optional[str] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -70,17 +73,24 @@ class CartItemUpdate(BaseModel):
 
 class CartItemResponse(BaseModel):
     id: int
+    farmer_id: Optional[int] = None
     product_id: int
     quantity: int
     product: ProductResponse
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
 # Order Schemas
+class OrderItemInput(BaseModel):
+    product_id: int
+    quantity: int
+    price_at_purchase: Optional[float] = None
+
 class OrderItemResponse(BaseModel):
     id: int
+    order_id: Optional[int] = None
     product_id: int
     quantity: int
     price_at_purchase: float
@@ -90,9 +100,10 @@ class OrderItemResponse(BaseModel):
         from_attributes = True
 
 class OrderCreate(BaseModel):
-    delivery_address: str
+    delivery_address: Optional[str] = "Registered Farm Address"
     razorpay_order_id: Optional[str] = None
     razorpay_payment_id: Optional[str] = None
+    items: Optional[List[OrderItemInput]] = None
 
 class OrderUpdateStatus(BaseModel):
     status: OrderStatus
@@ -108,6 +119,7 @@ class OrderResponse(BaseModel):
     razorpay_payment_id: Optional[str] = None
     items: List[OrderItemResponse] = []
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -121,6 +133,8 @@ class EquipmentBase(BaseModel):
     rate: float
     rate_unit: RateUnit
     location: str
+    stock_quantity: Optional[int] = 1
+    availability_status: Optional[str] = "AVAILABLE"
     image_url: str
 
 class EquipmentCreate(EquipmentBase):
@@ -134,6 +148,8 @@ class EquipmentUpdate(BaseModel):
     rate: Optional[float] = None
     rate_unit: Optional[RateUnit] = None
     location: Optional[str] = None
+    stock_quantity: Optional[int] = None
+    availability_status: Optional[str] = None
     image_url: Optional[str] = None
 
 class EquipmentResponse(EquipmentBase):
@@ -142,6 +158,7 @@ class EquipmentResponse(EquipmentBase):
     owner_name: Optional[str] = None
     owner_phone: Optional[str] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -159,6 +176,9 @@ class BookingResponse(BaseModel):
     farmer_phone: Optional[str] = None
     equipment_id: int
     equipment_name: Optional[str] = None
+    equipment_type: Optional[EquipmentType] = None
+    equipment_rate: Optional[float] = None
+    equipment_rate_unit: Optional[RateUnit] = None
     equipment_location: Optional[str] = None
     start_date: datetime
     end_date: datetime
@@ -166,6 +186,7 @@ class BookingResponse(BaseModel):
     queue_position: Optional[int] = None
     confirmation_deadline: Optional[datetime] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -181,8 +202,10 @@ class AdminStatsResponse(BaseModel):
     total_users: int
     total_farmers: int
     total_vendors: int
+    total_equipment_owners: int
     total_equipment: int
     total_products: int
     total_orders: int
     total_bookings: int
     total_revenue: float
+

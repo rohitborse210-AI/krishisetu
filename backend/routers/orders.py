@@ -1,3 +1,4 @@
+import time
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -6,20 +7,59 @@ from backend.models import Order, OrderItem, CartItem, Product, User, UserRole, 
 from backend.schemas import (
     OrderCreate,
     OrderResponse,
+    OrderItemResponse,
     OrderUpdateStatus,
     CartItemCreate,
     CartItemUpdate,
     CartItemResponse,
 )
 from backend.auth import get_current_user, require_roles
+from backend.routers.products import format_product_response
 
 router = APIRouter(prefix="/api", tags=["Cart & Orders"])
+
+def format_cart_item(item: CartItem) -> CartItemResponse:
+    return CartItemResponse(
+        id=item.id,
+        farmer_id=item.farmer_id,
+        product_id=item.product_id,
+        quantity=item.quantity,
+        product=format_product_response(item.product),
+        created_at=item.created_at,
+    )
+
+def format_order_response(o: Order) -> OrderResponse:
+    items_resp = []
+    for oi in o.items:
+        items_resp.append(
+            OrderItemResponse(
+                id=oi.id,
+                order_id=oi.order_id,
+                product_id=oi.product_id,
+                quantity=oi.quantity,
+                price_at_purchase=oi.price_at_purchase,
+                product=format_product_response(oi.product) if oi.product else None,
+            )
+        )
+    return OrderResponse(
+        id=o.id,
+        farmer_id=o.farmer_id,
+        farmer_name=o.farmer.name if o.farmer else "Farmer",
+        total_amount=o.total_amount,
+        status=o.status,
+        delivery_address=o.delivery_address or "Registered Farm Address",
+        razorpay_order_id=o.razorpay_order_id,
+        razorpay_payment_id=o.razorpay_payment_id,
+        items=items_resp,
+        created_at=o.created_at,
+        updated_at=getattr(o, "updated_at", None),
+    )
 
 # Cart Endpoints
 @router.get("/cart", response_model=List[CartItemResponse])
 def get_cart(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     items = db.query(CartItem).filter(CartItem.farmer_id == current_user.id).all()
-    return items
+    return [format_cart_item(i) for i in items if i.product]
 
 @router.post("/cart", response_model=CartItemResponse, status_code=status.HTTP_201_CREATED)
 def add_to_cart(
@@ -39,10 +79,10 @@ def add_to_cart(
         .first()
     )
     if existing_item:
-        existing_item.quantity += item_in.quantity
+        existing_item.quantity = min(product.stock, existing_item.quantity + item_in.quantity)
         db.commit()
         db.refresh(existing_item)
-        return existing_item
+        return format_cart_item(existing_item)
 
     new_item = CartItem(
         farmer_id=current_user.id,
@@ -52,7 +92,7 @@ def add_to_cart(
     db.add(new_item)
     db.commit()
     db.refresh(new_item)
-    return new_item
+    return format_cart_item(new_item)
 
 @router.put("/cart/{id}", response_model=CartItemResponse)
 def update_cart_item(
@@ -61,7 +101,14 @@ def update_cart_item(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    item = db.query(CartItem).filter(CartItem.id == id, CartItem.farmer_id == current_user.id).first()
+    item = (
+        db.query(CartItem)
+        .filter(
+            CartItem.farmer_id == current_user.id,
+            (CartItem.id == id) | (CartItem.product_id == id),
+        )
+        .first()
+    )
     if not item:
         raise HTTPException(status_code=404, detail="Cart item not found")
 
@@ -70,10 +117,13 @@ def update_cart_item(
         db.commit()
         raise HTTPException(status_code=204, detail="Item removed")
 
+    if item.product and item_update.quantity > item.product.stock:
+        raise HTTPException(status_code=400, detail="Requested quantity exceeds available stock")
+
     item.quantity = item_update.quantity
     db.commit()
     db.refresh(item)
-    return item
+    return format_cart_item(item)
 
 @router.delete("/cart/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_cart_item(
@@ -81,7 +131,14 @@ def delete_cart_item(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    item = db.query(CartItem).filter(CartItem.id == id, CartItem.farmer_id == current_user.id).first()
+    item = (
+        db.query(CartItem)
+        .filter(
+            CartItem.farmer_id == current_user.id,
+            (CartItem.id == id) | (CartItem.product_id == id),
+        )
+        .first()
+    )
     if not item:
         raise HTTPException(status_code=404, detail="Cart item not found")
     db.delete(item)
@@ -96,30 +153,43 @@ def create_order(
     db: Session = Depends(get_db),
 ):
     cart_items = db.query(CartItem).filter(CartItem.farmer_id == current_user.id).all()
-    if not cart_items:
-        raise HTTPException(status_code=400, detail="Cannot checkout with empty cart.")
 
     total_amount = 0.0
     order_items = []
 
-    # Validate stock and calculate total
-    for item in cart_items:
-        product = item.product
-        if not product or product.stock < item.quantity:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Insufficient stock for '{product.name if product else 'Item'}'"
-            )
-        total_amount += product.price * item.quantity
-        order_items.append((product, item.quantity, product.price))
+    if cart_items:
+        for item in cart_items:
+            product = item.product
+            if not product or product.stock < item.quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Insufficient stock for '{product.name if product else 'Item'}'",
+                )
+            total_amount += product.price * item.quantity
+            order_items.append((product, item.quantity, product.price))
+    elif order_in.items:
+        for req_item in order_in.items:
+            product = db.query(Product).filter(Product.id == req_item.product_id).first()
+            if not product or product.stock < req_item.quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Insufficient stock for '{product.name if product else 'Item'}'",
+                )
+            price = product.price
+            total_amount += price * req_item.quantity
+            order_items.append((product, req_item.quantity, price))
+    else:
+        raise HTTPException(status_code=400, detail="Cannot checkout with empty cart.")
+
+    rzp_order_id = order_in.razorpay_order_id or f"order_test_{int(time.time())}_{current_user.id}"
 
     # Create Order
     db_order = Order(
         farmer_id=current_user.id,
         total_amount=total_amount,
         status=OrderStatus.PLACED,
-        delivery_address=order_in.delivery_address,
-        razorpay_order_id=order_in.razorpay_order_id,
+        delivery_address=order_in.delivery_address or current_user.location or "Registered Farm Address",
+        razorpay_order_id=rzp_order_id,
         razorpay_payment_id=order_in.razorpay_payment_id,
     )
     db.add(db_order)
@@ -128,6 +198,9 @@ def create_order(
     # Deduct stock and create OrderItems
     for product, qty, price in order_items:
         product.stock -= qty
+        product.availability_status = (
+            "OUT_OF_STOCK" if product.stock <= 0 else "LOW_STOCK" if product.stock <= 15 else "IN_STOCK"
+        )
         db.add(product)
         oi = OrderItem(
             order_id=db_order.id,
@@ -143,18 +216,16 @@ def create_order(
 
     db.commit()
     db.refresh(db_order)
-
-    resp = OrderResponse.from_orm(db_order)
-    resp.farmer_name = current_user.name
-    return resp
+    return format_order_response(db_order)
 
 @router.get("/orders/my", response_model=List[OrderResponse])
 def get_my_orders(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if current_user.role == UserRole.VENDOR:
-        # Vendor views orders containing products they sold
+    if current_user.role == UserRole.ADMIN:
+        orders = db.query(Order).order_by(Order.created_at.desc()).all()
+    elif current_user.role == UserRole.VENDOR:
         orders = (
             db.query(Order)
             .join(OrderItem, Order.id == OrderItem.order_id)
@@ -172,13 +243,7 @@ def get_my_orders(
             .all()
         )
 
-    results = []
-    for o in orders:
-        resp = OrderResponse.from_orm(o)
-        if o.farmer:
-            resp.farmer_name = o.farmer.name
-        results.append(resp)
-    return results
+    return [format_order_response(o) for o in orders]
 
 @router.get("/orders/{id}", response_model=OrderResponse)
 def get_order_by_id(
@@ -189,10 +254,7 @@ def get_order_by_id(
     order = db.query(Order).filter(Order.id == id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    resp = OrderResponse.from_orm(order)
-    if order.farmer:
-        resp.farmer_name = order.farmer.name
-    return resp
+    return format_order_response(order)
 
 @router.put("/orders/{id}/status", response_model=OrderResponse)
 def update_order_status(
@@ -207,7 +269,5 @@ def update_order_status(
     order.status = status_update.status
     db.commit()
     db.refresh(order)
-    resp = OrderResponse.from_orm(order)
-    if order.farmer:
-        resp.farmer_name = order.farmer.name
-    return resp
+    return format_order_response(order)
+

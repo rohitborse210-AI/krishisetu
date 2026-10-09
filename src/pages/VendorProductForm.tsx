@@ -18,7 +18,7 @@ export const VendorProductForm: React.FC = () => {
   const [price, setPrice] = useState('450');
   const [stock, setStock] = useState('100');
   const [imageUrl, setImageUrl] = useState(
-    '/src/assets/images/wheat_seeds_sack_1791500903435.jpg'
+    '/assets/images/wheat_seeds_sack_1791500903435.jpg'
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

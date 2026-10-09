@@ -42,36 +42,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (savedToken && savedUser) {
         try {
-          setUser(JSON.parse(savedUser));
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
           setToken(savedToken);
-          // Attempt to verify with /auth/me
-          const me = await api.getMe();
-          setUser(me);
-          localStorage.setItem('krishi_user', JSON.stringify(me));
+          // If backend is live and saved token was a mock token, exchange it for a real JWT
+          if (healthy && savedToken.startsWith('mock-jwt-')) {
+            const response = await api.login(parsedUser.email || 'farmer@krishisetu.com', 'password123');
+            setToken(response.access_token);
+            setUser(response.user);
+            localStorage.setItem('krishi_token', response.access_token);
+            localStorage.setItem('krishi_user', JSON.stringify(response.user));
+          } else {
+            const me = await api.getMe();
+            setUser(me);
+            localStorage.setItem('krishi_user', JSON.stringify(me));
+          }
         } catch {
-          // If token failed, reset
           localStorage.removeItem('krishi_token');
           localStorage.removeItem('krishi_user');
           setUser(null);
           setToken(null);
         }
       } else {
-        // By default for demo ease, start with the default Farmer & Owner account
-        const defaultUser: User = {
-          id: 1,
-          name: 'Ramesh Kumar (Farmer & Owner)',
-          email: 'farmer@krishisetu.com',
-          phone: '9876543210',
-          role: 'FARMER',
-          is_equipment_owner: true,
-          location: 'Nashik, Maharashtra',
-          created_at: new Date().toISOString(),
-        };
-        const demoToken = 'mock-jwt-demo-token-farmer-1';
-        localStorage.setItem('krishi_token', demoToken);
-        localStorage.setItem('krishi_user', JSON.stringify(defaultUser));
-        setUser(defaultUser);
-        setToken(demoToken);
+        // Default demo account on first load
+        try {
+          const response = await api.login('farmer@krishisetu.com', 'password123');
+          setToken(response.access_token);
+          setUser(response.user);
+          localStorage.setItem('krishi_token', response.access_token);
+          localStorage.setItem('krishi_user', JSON.stringify(response.user));
+        } catch {
+          const defaultUser: User = {
+            id: 1,
+            name: 'Ramesh Kumar (Farmer & Owner)',
+            email: 'farmer@krishisetu.com',
+            phone: '9876543210',
+            role: 'FARMER',
+            is_equipment_owner: true,
+            location: 'Nashik, Maharashtra',
+            created_at: new Date().toISOString(),
+          };
+          const demoToken = 'mock-jwt-demo-token-farmer-1';
+          localStorage.setItem('krishi_token', demoToken);
+          localStorage.setItem('krishi_user', JSON.stringify(defaultUser));
+          setUser(defaultUser);
+          setToken(demoToken);
+        }
       }
       setIsLoading(false);
     };
@@ -127,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       VENDOR: 'vendor@krishisetu.com',
       ADMIN: 'admin@krishisetu.com',
     };
-    await login(emails[role]);
+    await login(emails[role], 'password123');
   };
 
   return (

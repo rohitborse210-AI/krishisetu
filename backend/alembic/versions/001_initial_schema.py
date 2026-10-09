@@ -25,7 +25,7 @@ def upgrade() -> None:
         sa.Column('role', sa.String(length=50), nullable=False),
         sa.Column('is_equipment_owner', sa.Boolean(), nullable=False, server_default='false'),
         sa.Column('location', sa.String(length=255), nullable=False),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
     op.create_index('ix_users_email', 'users', ['email'], unique=True)
 
@@ -39,9 +39,13 @@ def upgrade() -> None:
         sa.Column('description', sa.Text(), nullable=False),
         sa.Column('price', sa.Float(), nullable=False),
         sa.Column('stock', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('availability_status', sa.String(length=50), nullable=False, server_default='IN_STOCK'),
         sa.Column('image_url', sa.String(length=500), nullable=False),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
+    op.create_index('ix_products_category', 'products', ['category'], unique=False)
+    op.create_index('ix_products_name', 'products', ['name'], unique=False)
 
     # Cart Items table
     op.create_table(
@@ -50,7 +54,7 @@ def upgrade() -> None:
         sa.Column('farmer_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
         sa.Column('product_id', sa.Integer(), sa.ForeignKey('products.id'), nullable=False),
         sa.Column('quantity', sa.Integer(), nullable=False, server_default='1'),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
 
     # Orders table
@@ -60,10 +64,11 @@ def upgrade() -> None:
         sa.Column('farmer_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
         sa.Column('total_amount', sa.Float(), nullable=False),
         sa.Column('status', sa.String(length=50), nullable=False, server_default='PLACED'),
-        sa.Column('delivery_address', sa.String(length=500), nullable=False),
+        sa.Column('delivery_address', sa.String(length=500), nullable=False, server_default='Registered Farm Address'),
         sa.Column('razorpay_order_id', sa.String(length=255), nullable=True),
         sa.Column('razorpay_payment_id', sa.String(length=255), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
 
     # Order Items table
@@ -88,9 +93,14 @@ def upgrade() -> None:
         sa.Column('rate', sa.Float(), nullable=False),
         sa.Column('rate_unit', sa.String(length=20), nullable=False, server_default='HOUR'),
         sa.Column('location', sa.String(length=255), nullable=False),
+        sa.Column('stock_quantity', sa.Integer(), nullable=False, server_default='1'),
+        sa.Column('availability_status', sa.String(length=50), nullable=False, server_default='AVAILABLE'),
         sa.Column('image_url', sa.String(length=500), nullable=False),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
+    op.create_index('ix_equipment_type', 'equipment', ['type'], unique=False)
+    op.create_index('ix_equipment_location', 'equipment', ['location'], unique=False)
 
     # Booking Requests table (FCFS)
     op.create_table(
@@ -103,8 +113,10 @@ def upgrade() -> None:
         sa.Column('status', sa.String(length=50), nullable=False, server_default='CONFIRMATION_PENDING'),
         sa.Column('queue_position', sa.Integer(), nullable=True),
         sa.Column('confirmation_deadline', sa.DateTime(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
+        sa.Column('updated_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP')),
     )
+    op.create_index('ix_booking_requests_status', 'booking_requests', ['status'], unique=False)
 
 def downgrade() -> None:
     op.drop_table('booking_requests')
@@ -114,3 +126,4 @@ def downgrade() -> None:
     op.drop_table('cart_items')
     op.drop_table('products')
     op.drop_table('users')
+

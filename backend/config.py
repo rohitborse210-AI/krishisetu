@@ -1,23 +1,40 @@
 import os
 from pydantic_settings import BaseSettings
-from typing import Optional
+from typing import List
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Krishisetu - Smart Agricultural Marketplace & Equipment Rental"
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/krishisetu_db")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "btech_krishisetu_super_secret_jwt_key_2026_safe")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 24 * 7)))  # 7 days
     
+    # CORS Allowed Origins (comma-separated in env or "*" for local dev)
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,*")
+
     # Razorpay Test Credentials
     RAZORPAY_KEY_ID: str = os.getenv("RAZORPAY_KEY_ID", "rzp_test_KRISHISETU12345")
     RAZORPAY_KEY_SECRET: str = os.getenv("RAZORPAY_KEY_SECRET", "test_secret_krishisetu98765")
     
     # FCFS Rental Window Rules
-    BOOKING_CONFIRMATION_HOURS: int = 24
+    BOOKING_CONFIRMATION_HOURS: int = int(os.getenv("BOOKING_CONFIRMATION_HOURS", "24"))
+
+    @property
+    def sqlalchemy_database_url(self) -> str:
+        url = self.DATABASE_URL
+        if url and url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql://", 1)
+        return url
+
+    @property
+    def cors_origins(self) -> List[str]:
+        origins = [o.strip() for o in self.ALLOWED_ORIGINS.split(",") if o.strip()]
+        return origins if origins else ["*"]
 
     class Config:
         case_sensitive = True
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
+

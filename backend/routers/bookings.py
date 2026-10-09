@@ -7,18 +7,30 @@ from backend.models import BookingRequest, BookingStatus, Equipment, User, UserR
 from backend.schemas import BookingCreate, BookingResponse
 from backend.auth import get_current_user
 from backend.config import settings
+from backend.scheduler import process_expired_bookings
 
 router = APIRouter(prefix="/api/bookings", tags=["Equipment Bookings & FCFS Queue"])
 
 def format_booking_response(b: BookingRequest) -> BookingResponse:
-    resp = BookingResponse.from_orm(b)
-    if b.farmer:
-        resp.farmer_name = b.farmer.name
-        resp.farmer_phone = b.farmer.phone
-    if b.equipment:
-        resp.equipment_name = b.equipment.name
-        resp.equipment_location = b.equipment.location
-    return resp
+    return BookingResponse(
+        id=b.id,
+        farmer_id=b.farmer_id,
+        farmer_name=b.farmer.name if b.farmer else "Farmer",
+        farmer_phone=b.farmer.phone if b.farmer else None,
+        equipment_id=b.equipment_id,
+        equipment_name=b.equipment.name if b.equipment else f"Equipment #{b.equipment_id}",
+        equipment_type=b.equipment.type if b.equipment else None,
+        equipment_rate=b.equipment.rate if b.equipment else None,
+        equipment_rate_unit=b.equipment.rate_unit if b.equipment else None,
+        equipment_location=b.equipment.location if b.equipment else None,
+        start_date=b.start_date,
+        end_date=b.end_date,
+        status=b.status,
+        queue_position=b.queue_position,
+        confirmation_deadline=b.confirmation_deadline,
+        created_at=b.created_at,
+        updated_at=getattr(b, "updated_at", None),
+    )
 
 @router.post("", response_model=BookingResponse, status_code=status.HTTP_201_CREATED)
 def create_booking(
@@ -26,6 +38,8 @@ def create_booking(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    process_expired_bookings()
+
     if booking_in.start_date >= booking_in.end_date:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -38,19 +52,36 @@ def create_booking(
 
     now = datetime.utcnow()
 
-    # Query overlapping bookings that are active (CONFIRMED or CONFIRMATION_PENDING)
-    overlapping_active = (
+    # Check if already CONFIRMED for overlapping dates
+    overlapping_confirmed = (
         db.query(BookingRequest)
         .filter(
             BookingRequest.equipment_id == booking_in.equipment_id,
-            BookingRequest.status.in_([BookingStatus.CONFIRMED, BookingStatus.CONFIRMATION_PENDING]),
+            BookingRequest.status == BookingStatus.CONFIRMED,
+            BookingRequest.start_date < booking_in.end_date,
+            BookingRequest.end_date > booking_in.start_date,
+        )
+        .first()
+    )
+    if overlapping_confirmed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Equipment is already CONFIRMED booked for this requested date range. Please select alternative dates.",
+        )
+
+    # Check if CONFIRMATION_PENDING exists for overlapping dates
+    overlapping_pending = (
+        db.query(BookingRequest)
+        .filter(
+            BookingRequest.equipment_id == booking_in.equipment_id,
+            BookingRequest.status == BookingStatus.CONFIRMATION_PENDING,
             BookingRequest.start_date < booking_in.end_date,
             BookingRequest.end_date > booking_in.start_date,
         )
         .first()
     )
 
-    if not overlapping_active:
+    if not overlapping_pending:
         # First-Come First-Served slot granted!
         new_booking = BookingRequest(
             farmer_id=current_user.id,
@@ -58,11 +89,11 @@ def create_booking(
             start_date=booking_in.start_date,
             end_date=booking_in.end_date,
             status=BookingStatus.CONFIRMATION_PENDING,
-            queue_position=None,
+            queue_position=1,
             confirmation_deadline=now + timedelta(hours=settings.BOOKING_CONFIRMATION_HOURS),
         )
     else:
-        # Overlapping booking exists, place into FCFS queue
+        # Overlapping pending booking exists, place into FCFS queue
         queued_count = (
             db.query(BookingRequest)
             .filter(
@@ -79,7 +110,7 @@ def create_booking(
             start_date=booking_in.start_date,
             end_date=booking_in.end_date,
             status=BookingStatus.QUEUED,
-            queue_position=queued_count + 1,
+            queue_position=queued_count + 2,
             confirmation_deadline=None,
         )
 
@@ -93,6 +124,7 @@ def get_my_bookings(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    process_expired_bookings()
     bookings = (
         db.query(BookingRequest)
         .filter(BookingRequest.farmer_id == current_user.id)
@@ -106,14 +138,17 @@ def get_owner_bookings(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Bookings made for equipment owned by this user
-    bookings = (
-        db.query(BookingRequest)
-        .join(Equipment, BookingRequest.equipment_id == Equipment.id)
-        .filter(Equipment.owner_id == current_user.id)
-        .order_by(BookingRequest.created_at.desc())
-        .all()
-    )
+    process_expired_bookings()
+    if current_user.role == UserRole.ADMIN:
+        bookings = db.query(BookingRequest).order_by(BookingRequest.created_at.desc()).all()
+    else:
+        bookings = (
+            db.query(BookingRequest)
+            .join(Equipment, BookingRequest.equipment_id == Equipment.id)
+            .filter(Equipment.owner_id == current_user.id)
+            .order_by(BookingRequest.created_at.desc())
+            .all()
+        )
     return [format_booking_response(b) for b in bookings]
 
 @router.get("/{id}", response_model=BookingResponse)
@@ -122,6 +157,7 @@ def get_booking_by_id(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    process_expired_bookings()
     b = db.query(BookingRequest).filter(BookingRequest.id == id).first()
     if not b:
         raise HTTPException(status_code=404, detail="Booking request not found")
@@ -133,6 +169,7 @@ def confirm_booking(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    process_expired_bookings()
     b = db.query(BookingRequest).filter(BookingRequest.id == id).first()
     if not b:
         raise HTTPException(status_code=404, detail="Booking request not found")
@@ -157,7 +194,6 @@ def cancel_booking(
     if not b:
         raise HTTPException(status_code=404, detail="Booking request not found")
     if b.farmer_id != current_user.id and current_user.role != UserRole.ADMIN:
-        # Also allow equipment owner to cancel
         if not b.equipment or b.equipment.owner_id != current_user.id:
             raise HTTPException(status_code=403, detail="Not authorized to cancel this booking")
 
@@ -166,9 +202,8 @@ def cancel_booking(
     b.queue_position = None
     now = datetime.utcnow()
 
-    # If cancelled booking was holding the slot, promote next queued booking!
     if prev_status in [BookingStatus.CONFIRMATION_PENDING, BookingStatus.CONFIRMED]:
-        next_in_queue = (
+        queued_list = (
             db.query(BookingRequest)
             .filter(
                 BookingRequest.equipment_id == b.equipment_id,
@@ -177,15 +212,19 @@ def cancel_booking(
                 BookingRequest.end_date > b.start_date,
             )
             .order_by(BookingRequest.queue_position.asc(), BookingRequest.created_at.asc())
-            .first()
+            .all()
         )
-        if next_in_queue:
+        if queued_list:
+            next_in_queue = queued_list[0]
             next_in_queue.status = BookingStatus.CONFIRMATION_PENDING
-            next_in_queue.queue_position = None
+            next_in_queue.queue_position = 1
             next_in_queue.confirmation_deadline = now + timedelta(
                 hours=settings.BOOKING_CONFIRMATION_HOURS
             )
+            for idx, q_item in enumerate(queued_list[1:], start=2):
+                q_item.queue_position = idx
 
     db.commit()
     db.refresh(b)
     return format_booking_response(b)
+

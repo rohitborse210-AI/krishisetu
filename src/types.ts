@@ -64,6 +64,7 @@ export interface Order {
   farmer_name?: string;
   status: OrderStatus;
   total_amount: number;
+  delivery_address?: string;
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
   items: OrderItem[];

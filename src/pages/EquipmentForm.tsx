@@ -22,7 +22,7 @@ export const EquipmentForm: React.FC = () => {
   const [specifications, setSpecifications] = useState('');
   const [location, setLocation] = useState(user?.location || 'Nashik, Maharashtra');
   const [imageUrl, setImageUrl] = useState(
-    '/src/assets/images/mahindra_red_tractor_1791501058296.jpg'
+    '/assets/images/mahindra_red_tractor_1791501058296.jpg'
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
